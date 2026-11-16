@@ -75,7 +75,7 @@ def planned_jobs(args):
                 for split in split_list(args.splits, range(50)):
                     jobs.append(dict(study='parameters',dataset=dataset,split=split,axis=axis))
     elif args.study in ['rules','nested','solver']:
-        folds = range(10) if args.study == 'nested' else FIVE_FOLDS
+        folds = range(10) if args.study == 'nested' else range(50) if args.study == 'solver' else FIVE_FOLDS
         for dataset in datasets:
             for split in split_list(args.splits, folds):
                 jobs.append(dict(study=args.study,dataset=dataset,split=split))
@@ -234,7 +234,11 @@ def solver_comparison(job, X, y, tr, te):
     D = dimension_rule(len(tr),X.shape[1])
     Q,h,build = rff_system(X[tr],y[tr],D,seed=42+job['split'])
     output = []
-    order = ['FISTA','PG'] if job['split']%20==0 else ['PG','FISTA']
+    # Retain the original five-fold order; counterbalance the remaining folds.
+    split = job['split']
+    new_folds = [s for s in range(50) if s not in FIVE_FOLDS]
+    fista_first = (split%20 == 0) if split in FIVE_FOLDS else (new_folds.index(split)%2 == 1)
+    order = ['FISTA','PG'] if fista_first else ['PG','FISTA']
     for method in order:
         alpha,diag = solve_system(Q,h,max_iter=100000,method=method)
         idx = np.argsort(-alpha,kind='stable')[:min(10,X.shape[1])]

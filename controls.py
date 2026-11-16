@@ -235,7 +235,8 @@ def planned_jobs(args):
                 'label-kernels': ['Breast Cancer', 'Digits', 'Libras Movement', 'ORL'],
                 'storage-layout': ['Digits']}
     datasets = defaults[args.study] if args.datasets is None else args.datasets.split(',')
-    folds = FOLDS if args.splits is None else [int(s) for s in args.splits.split(',')]
+    folds = (list(range(50)) if args.study == 'block-solvers' and args.variant in ['dense', 'both']
+             else FOLDS) if args.splits is None else [int(s) for s in args.splits.split(',')]
     if not folds or len(folds) != len(set(folds)) or any(s < 0 or s >= 50 for s in folds):
         raise ValueError('Choose distinct split indices from 0 to 49.')
     jobs = []
@@ -248,7 +249,9 @@ def planned_jobs(args):
                         if args.study == 'block-solvers' else
                         [dict(method=m) for m in ['Exact-HSIC', 'Exact-A-F', 'Exact-streamed', 'RFF-HSIC']]
                         if args.study == 'storage-layout' else [{}])
-            jobs.extend(dict(study=args.study, dataset=dataset, split=split, **v) for v in variants)
+            jobs.extend(dict(study=args.study, dataset=dataset, split=split, **v) for v in variants
+                        if not (args.study == 'block-solvers' and args.splits is None
+                                and v['variant'] == 'matrix-free' and split not in FOLDS))
     return jobs
 
 
@@ -276,10 +279,11 @@ def verify_archive():
     from io_utils import records as archived_records
     from reproduce import load_case
     data = json.loads((ROOT/'reported_results.json').read_text(encoding='utf-8'))
-    rows = data['source_data']['implementation_controls']
+    archive = list(archived_records())
+    rows = data['source_data']['implementation_controls'] + [r for r in archive if r.get('study') == 'block-solvers']
     counts = {study: sum(r['study'] == study for r in rows)
               for study in ['block-solvers', 'label-kernels', 'storage-layout']}
-    if counts != {'block-solvers': 60, 'label-kernels': 20, 'storage-layout': 20}:
+    if counts != {'block-solvers': 330, 'label-kernels': 20, 'storage-layout': 20}:
         raise ValueError('Incomplete archived control records.')
     checked = 0
     for row in rows:
@@ -295,16 +299,41 @@ def verify_archive():
             checked += 1
         if row['study'] == 'block-solvers':
             a, b = row['evaluations']
-            if set(a['selected_features']) != set(b['selected_features']) or a['predictions'] != b['predictions']:
-                raise ValueError('Block control agreement mismatch.')
+            same_set = set(a['selected_features']) == set(b['selected_features'])
+            same_predictions = a['predictions'] == b['predictions']
+            if row.get('same_feature_set', same_set) != same_set or row.get('same_predictions', same_predictions) != same_predictions:
+                raise ValueError('Block control agreement flag mismatch.')
             if any(e['kkt_residual'] > TOL for e in [a, b]):
                 raise ValueError('Block control KKT tolerance mismatch.')
+    # Recompute Table 9 from the paired fits rather than from displayed summaries.
+    solver_records = [r for r in archive if r.get('study') == 'solver']
+    if len(solver_records) != 400:
+        raise ValueError('Incomplete Table 9 solver records.')
+    for displayed in data['tables'][8]['rows'][1:]:
+        group = [r for r in solver_records if r['dataset'] == displayed[0]]
+        if len(group) != 100:
+            raise ValueError('Table 9 requires fifty pairs per dataset.')
+        methods = {method: {r['split']: r for r in group if r['solver'] == method}
+                   for method in ['FISTA', 'PG']}
+        if any(set(values) != set(range(50)) for values in methods.values()):
+            raise ValueError('Table 9 split coverage mismatch.')
+        fs = [methods['FISTA'][s]['diagnostics'] for s in range(50)]
+        ps = [methods['PG'][s]['diagnostics'] for s in range(50)]
+        if any(not d['converged'] or d['kkt_residual'] > TOL for d in fs+ps):
+            raise ValueError('Table 9 convergence mismatch.')
+        ratio = np.exp(np.mean([np.log(p['solve_seconds']/f['solve_seconds']) for f,p in zip(fs,ps)]))
+        expected = [f'{np.mean([d["solve_seconds"] for d in fs]):.4f}',
+                    f'{np.mean([d["solve_seconds"] for d in ps]):.4f}',
+                    f'{np.mean([d["iterations"] for d in fs]):.0f}',
+                    f'{np.mean([d["iterations"] for d in ps]):.0f}', f'{ratio:.2f}']
+        if expected != displayed[1:]:
+            raise ValueError('Table 9 summary mismatch.')
     for table_row in data['tables'][9]['rows'][1:]:
         dataset, budget = table_row[:2]
         group = [r for r in rows if r['study'] == 'block-solvers' and r['variant'] == 'dense'
                  and r['dataset'] == dataset and r['k'] == int(budget)]
-        if len(group) != 5:
-            raise ValueError('Table 10 requires five folds.')
+        if len(group) != 50 or {r['split'] for r in group} != set(range(50)):
+            raise ValueError('Table 10 requires fifty distinct folds.')
         for column, name in [(2, 'NN-LARS'), (3, 'FISTA')]:
             values = [next(e for e in r['evaluations'] if e['solver'] == name)['median_solver_seconds'] for r in group]
             if f'{np.mean(values):.4f}' != table_row[column]:
@@ -316,7 +345,7 @@ def verify_archive():
                  and r['dataset'] == dataset and r['k'] == int(budget)]
         for column, name in [(3, 'NN-LARS'), (4, 'FISTA')]:
             values = [next(e for e in r['evaluations'] if e['solver'] == name)['median_solver_seconds'] for r in group]
-            if len(values) != 5 or f'{np.mean(values):.4f}' != displayed[column]:
+            if len(values) != (50 if variant == 'dense' else 5) or f'{np.mean(values):.4f}' != displayed[column]:
                 raise ValueError('Additional Block solver table mismatch.')
     for displayed in data['additional_tables'][1]['rows'][1:]:
         group = [r for r in rows if r['study'] == 'label-kernels' and r['dataset'] == displayed[0]]

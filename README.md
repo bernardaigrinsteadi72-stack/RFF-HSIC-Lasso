@@ -65,7 +65,7 @@ python experiments.py budget --output runs/budgets.jsonl
 python experiments.py solver --output runs/solvers.jsonl
 ~~~
 
-The relevance-only study uses the original ten datasets and top-10. Budgets are 5/10/min(20,d). The solver comparison uses Breast Cancer, Digits, Libras Movement, and ORL on splits 0/10/20/30/40: identical Q and h, zero initialization, identical step size and KKT tolerance, and 100000 allowed updates for both FISTA and PG. Construction and classifier fitting are excluded from solve times.
+The relevance-only study uses the original ten datasets and top-10. Budgets are 5/10/min(20,d). The solver comparison uses Breast Cancer, Digits, Libras Movement, and ORL on all 50 frozen splits: identical Q and h, zero initialization, identical step size and KKT tolerance, and 100000 allowed updates for both FISTA and PG. Construction and classifier fitting are excluded from solve times. The original five folds are retained; the remaining folds counterbalance solver order so each method runs first on 25 folds per dataset.
 
 ## Matched implementation controls
 
@@ -77,13 +77,13 @@ python controls.py label-kernels --output runs/label_kernels.jsonl
 python controls.py storage-layout --output runs/storage_layout.jsonl
 ~~~
 
-`verify` checks the existing records and predictions without fitting models. Other commands rerun the indicated controls in fresh serial processes; `--datasets` and `--splits` select smaller runs. All controls use the five frozen splits 0/10/20/30/40, two numerical-library threads, and RBF-SVM when classification is evaluated.
+`verify` checks the existing records and predictions without fitting models. Other commands rerun the indicated controls in fresh serial processes; `--datasets` and `--splits` select smaller runs. The dense Block solver control uses all 50 frozen splits. The matrix-free, label-kernel, and storage-layout controls retain splits 0/10/20/30/40. All use two numerical-library threads and RBF-SVM when classification is evaluated.
 
-The Block solver control uses Digits, Libras Movement, and ORL at top-5/top-10. Both solvers receive the same upstream Block design and the penalty at the requested NN-LARS path endpoint. Dense FISTA uses the manuscript solver with twice the half-loss penalty. Its timer includes fresh redundancy-matrix construction; NN-LARS includes native neighbor calculations. Common Block construction, penalty discovery, validation, and classifier fitting are excluded. Each fold reports the median of three alternating-order runs, and Table 10 averages these five medians. Both FISTA controls allow 100000 updates; the matrix-free control additionally has a 120 s limit per fit. These conditional controls are separate from the full-pipeline timings in Tables 4-5.
+The Block solver control uses Digits, Libras Movement, and ORL at top-5/top-10. Both solvers receive the same upstream Block design and the penalty at the requested NN-LARS path endpoint. Dense FISTA uses the manuscript solver with twice the half-loss penalty. Its timer includes fresh redundancy-matrix construction; NN-LARS includes native neighbor calculations. Common Block construction, penalty discovery, validation, and classifier fitting are excluded. Each fold reports the median of three alternating-order runs, and Table 10 averages these 50 medians. Both FISTA controls allow 100000 updates; the matrix-free control additionally has a 120 s limit per fit. These conditional controls are separate from the full-pipeline timings in Tables 4-5.
 
 Label-kernel checks use Breast Cancer, Digits, Libras Movement, and ORL at top-10, comparing the one-hot factor, dense Delta kernel, and class-weighted Delta kernel. Storage-layout controls use full Digits training folds, comparing the original explicit layout, Fortran-order explicit layout, streamed exact construction with feature blocks of 20, and RFF. Storage measurements require Windows and a 4096 MiB committed-memory cap; peak working set is a separate whole-process measurement.
 
-The result file contains 60 Block solver cases, 20 label-kernel cases, and 20 storage-layout cases. Only the records needed for these reported comparisons are added; full coefficients and large intermediate arrays are omitted. Timing and memory values depend on the machine and numerical libraries.
+The public records contain 300 dense Block solver cases, 30 matrix-free Block solver cases, 20 label-kernel cases, and 20 storage-layout cases. The original control cases remain in reported_results.json; the additional dense Block cases and all 400 paired FISTA/PG fits are stored in the compressed records archive. Only the records needed for these reported comparisons are added; full coefficients and large intermediate arrays are omitted. Timing and memory values depend on the machine and numerical libraries.
 
 ## Parameters and dimension rule
 
