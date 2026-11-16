@@ -76,9 +76,9 @@ def summarize(record_path=None, allow_partial=False):
     return dict(verified_prediction_records=tested,accuracy_summaries=summary,paired_comparisons=paired)
 
 
-def export_reported_tables(directory):
-    tables = json.loads((ROOT/'reported_results.json').read_text(encoding='utf-8'))['tables']
-    paths = [directory/f'table{i}.csv' for i in range(1,len(tables)+1)]
+def export_reported_tables(directory, key='tables', prefix='table'):
+    tables = json.loads((ROOT/'reported_results.json').read_text(encoding='utf-8'))[key]
+    paths = [directory/f'{prefix}{i}.csv' for i in range(1,len(tables)+1)]
     if any(p.exists() for p in paths):
         raise FileExistsError('Choose a new table directory.')
     directory.mkdir(parents=True,exist_ok=True)
@@ -95,13 +95,16 @@ def main():
     p.add_argument('--records',type=Path,help='A newly generated JSONL, GZIP, or ZIP file.')
     p.add_argument('--allow-partial',action='store_true')
     p.add_argument('--output',type=Path,help='Save the summary to a new JSON file.')
-    p.add_argument('--export-tables',type=Path,help='Export the eleven archived manuscript tables as CSV.')
+    p.add_argument('--export-tables',type=Path,help='Export the fourteen manuscript tables as CSV.')
+    p.add_argument('--export-controls',type=Path,help='Export the four additional numerical control tables as CSV.')
     args = p.parse_args()
     if args.output and args.output.exists():
         p.error('Choose a new output file.')
     result = summarize(args.records,args.allow_partial)
     if args.export_tables:
         result['archived_tables_exported'] = export_reported_tables(args.export_tables)
+    if args.export_controls:
+        result['additional_control_tables_exported'] = export_reported_tables(args.export_controls,'additional_tables','control')
     text = json.dumps(result,indent=2,ensure_ascii=False,allow_nan=False)
     if args.output:
         args.output.parent.mkdir(parents=True,exist_ok=True)
