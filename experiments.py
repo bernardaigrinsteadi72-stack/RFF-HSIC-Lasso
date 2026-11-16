@@ -68,8 +68,7 @@ def planned_jobs(args):
     elif args.study == 'parameters':
         axes = ['lambda','D','gamma'] if args.axis == 'all' else [args.axis]
         for axis in axes:
-            use = (['Breast Cancer','Libras Movement','Semeion'] if axis=='lambda'
-                   else ['Breast Cancer','Digits','Libras Movement'])
+            use = ['Breast Cancer','Digits','Libras Movement','Semeion']
             if args.datasets != 'all':
                 use = datasets
             for dataset in use:
@@ -136,6 +135,23 @@ def parameters(job, X, y, tr, te):
     axis = job['axis']
     values = [.001,.01,.1] if axis=='lambda' else [5,10,D] if axis=='D' else [.125,.5,2.]
     output = []
+    # Lambda timings follow the manuscript's fresh-fit protocol, without cached Q.
+    if axis == 'lambda':
+        from hsic import JournalHSIC
+        offset = job['split'] % len(values)
+        for lam in values[offset:] + values[:offset]:
+            started = time.perf_counter()
+            fitted = JournalHSIC(D=D, gamma=.5, lam=lam, seed=42+job['split']).fit(X[tr],y[tr])
+            elapsed = time.perf_counter()-started
+            idx = fitted.get_support(min(10,X.shape[1]))
+            diag = fitted.diagnostics_
+            output.append(dict(study='parameters',dataset=job['dataset'],split=job['split'],
+                axis=axis,value=lam,D=D,gamma=.5,lambda_value=lam,selector_seconds=elapsed,
+                construction_plus_solve_seconds=diag['build_seconds']+diag['solve_seconds'],
+                positive_weights=int(np.sum(fitted.alpha_>1e-10)),diagnostics=diag,
+                selected_features=idx.tolist(),
+                **predict_selected(X[tr],X[te],y[tr],y[te],idx)))
+        return output
     cache = {}
     for value in dict.fromkeys(values):
         dim = int(value) if axis=='D' else D
