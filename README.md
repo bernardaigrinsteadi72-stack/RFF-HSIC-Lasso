@@ -65,7 +65,7 @@ python experiments.py budget --output runs/budgets.jsonl
 python experiments.py solver --output runs/solvers.jsonl
 ~~~
 
-The relevance-only study uses the original ten datasets and top-10. Budgets are 5/10/min(20,d). The solver comparison uses Breast Cancer, Digits, Libras Movement, and ORL on all 50 frozen splits: identical Q and h, zero initialization, identical step size and KKT tolerance, and 100000 allowed updates for both FISTA and PG. Construction and classifier fitting are excluded from solve times. The original five folds are retained; the remaining folds counterbalance solver order so each method runs first on 25 folds per dataset.
+The relevance-only study uses all eleven datasets at top-10 on the same 50 frozen splits. The feature-budget study also covers all eleven datasets, with budgets 5/10/min(20,d) using the same training-fold ranking across budgets. The solver comparison uses Breast Cancer, Digits, Libras Movement, and ORL on all 50 frozen splits: identical Q and h, zero initialization, identical step size and KKT tolerance, and 100000 allowed updates for both FISTA and PG. Construction and classifier fitting are excluded from solve times. The original five folds are retained; the remaining folds counterbalance solver order so each method runs first on 25 folds per dataset.
 
 ## Matched implementation controls
 

@@ -37,8 +37,8 @@ def planned_jobs(args):
     defaults = {
         'main': available,
         'grouped': [d for d in available if 'grouped_splits' in manifest[d]],
-        'ablation': [d for d in available if d != 'ORL'],
-        'budget': [d for d in available if d != 'ORL'],
+        'ablation': available,
+        'budget': available,
         'rules': ['Breast Cancer','Digits','Libras Movement','Multiple Features'],
         'nested': ['Digits','Multiple Features'],
         'solver': ['Breast Cancer','Digits','Libras Movement','ORL'],
