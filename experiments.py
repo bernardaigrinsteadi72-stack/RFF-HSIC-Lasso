@@ -72,7 +72,7 @@ def planned_jobs(args):
             if args.datasets != 'all':
                 use = datasets
             for dataset in use:
-                for split in split_list(args.splits, range(50) if axis=='lambda' else FIVE_FOLDS):
+                for split in split_list(args.splits, range(50)):
                     jobs.append(dict(study='parameters',dataset=dataset,split=split,axis=axis))
     elif args.study in ['rules','nested','solver']:
         folds = range(10) if args.study == 'nested' else FIVE_FOLDS

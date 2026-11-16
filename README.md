@@ -95,7 +95,7 @@ python experiments.py rules --output runs/dimension_rule.jsonl
 python experiments.py nested --output runs/nested_dimension.jsonl
 ~~~
 
-All three parameter slices cover Breast Cancer, Digits, Libras Movement, and Semeion. Lambda uses 0.001/0.01/0.1 over 50 folds, with a fresh full fit for each value and rotated value order. D uses 5/10/the rule value, and gamma uses 0.125/0.5/2 over splits 0/10/20/30/40. The Semeion rule dimension is 37. The records archive includes the added Digits lambda and Semeion D/gamma fits from the Table 12 completion; all are recorded under Python 3.12.1.
+All three parameter slices cover Breast Cancer, Digits, Libras Movement, and Semeion. Lambda uses 0.001/0.01/0.1 over 50 folds, with a fresh full fit for each value and rotated value order. D uses 5/10/the rule value, and gamma uses 0.125/0.5/2. All three parameter slices use the same 50 frozen outer folds. The Semeion rule dimension is 37. The records archive includes the complete D/gamma comparisons on all 50 folds, retaining the original five folds and adding the remaining 45 folds. The completion runs use the original Python 3.12.1 environment.
 
 The rule diagnostic varies the lower bound 5/10/20, upper bound 40/80/160, and product constant 7500/15000/30000 one at a time. It records realized dimensions without fitting models.
 
