@@ -126,7 +126,7 @@ python summarize.py --records runs/wine.jsonl --allow-partial
 python plot_results.py --output figures --formats png,pdf
 ~~~
 
-CSV export contains the fourteen tables in the 1116 manuscript. `--export-controls` exports four additional numerical tables: Block solver controls (including matrix-free FISTA), label-kernel balanced accuracies, paired accuracy tests, and main-solver convergence. New main/grouped runs can be summarized with `--records`. Plotting reads archived numerical data and fits no models. Figures 1-2 show paired differences, 3-4 feature frequencies, 5-6 Jaccard overlap, 7-8 selection times, and 9-11 lambda sensitivity. Output paths must be new; existing results and figures are not replaced.
+CSV export contains the fourteen tables in the manuscript. `--export-controls` exports four additional numerical tables: Block solver controls (including matrix-free FISTA), label-kernel balanced accuracies, paired accuracy tests, and main-solver convergence. New main/grouped runs can be summarized with `--records`. Plotting reads archived numerical data and fits no models. Figures 1-2 show paired differences, 3-4 feature frequencies, 5-6 Jaccard overlap, 7-8 selection times, and 9-11 lambda sensitivity. Output paths must be new; existing results and figures are not replaced.
 
 | Manuscript tables | Contents | Reproduction entry |
 |---|---|---|
@@ -155,3 +155,128 @@ Block HSIC Lasso uses the original authors' pyHSICLasso 1.4.2 with sample-block 
 - [Original pyHSICLasso](https://github.com/riken-aip/pyHSICLasso)
 
 ORL contains 400 images, 1024 columns, and 40 classes. Input and split checksums are checked during loading. Original data and third-party software remain subject to their providers' terms.
+
+## Readable result tables
+
+These tables display the existing archived results without running code. The numerical entries are copied from the reported results; no additional fits or raw data are included.
+
+- [Paired accuracy differences and Holm-adjusted tests](#paired-accuracy-tests)
+- [Label-kernel checks](#label-kernel-checks)
+- [Main-solver convergence](#main-solver-convergence)
+- [Block solver controls](#block-solver-controls)
+- [Storage-layout controls](#storage-layout-controls)
+
+### Paired accuracy tests
+
+Differences are RFF-HSIC Lasso minus the named comparator, in percentage points (pp). HSIC denotes HSIC Lasso and Block denotes Block HSIC Lasso. Each comparison uses the same 50 outer folds. Intervals are pointwise 95% intervals with repeated-cross-validation variance correction and 49 degrees of freedom. Holm adjustment applies to the full family of 40 hypothesis tests, not to interval endpoints.
+
+| Dataset | k | Method | Difference / pp | 95% CI / pp | Raw P | Holm P |
+| --- | --- | --- | --- | --- | --- | --- |
+| Breast Cancer | 10 | HSIC | 0.071 | [-0.895, 1.036] | 0.8834 | 1.0000 |
+| Breast Cancer | 10 | Block | 0.175 | [-0.691, 1.042] | 0.6859 | 1.0000 |
+| Wine | 10 | HSIC | 0.000 | [0.000, 0.000] | 1.0000 | 1.0000 |
+| Wine | 10 | Block | 0.000 | [0.000, 0.000] | 1.0000 | 1.0000 |
+| Digits | 10 | HSIC | -0.145 | [-0.885, 0.595] | 0.6963 | 1.0000 |
+| Digits | 10 | Block | 2.226 | [0.538, 3.914] | 0.0108 | 0.3881 |
+| Ionosphere | 10 | HSIC | 0.459 | [-1.290, 2.207] | 0.6004 | 1.0000 |
+| Ionosphere | 10 | Block | 0.746 | [-1.115, 2.607] | 0.4244 | 1.0000 |
+| Sonar | 10 | HSIC | 0.171 | [-3.505, 3.848] | 0.9257 | 1.0000 |
+| Sonar | 10 | Block | 1.710 | [-3.513, 6.932] | 0.5137 | 1.0000 |
+| Libras Movement | 10 | HSIC | -0.278 | [-3.725, 3.169] | 0.8720 | 1.0000 |
+| Libras Movement | 10 | Block | 9.056 | [3.057, 15.054] | 0.0039 | 0.1467 |
+| Semeion | 10 | Block | -1.093 | [-4.013, 1.826] | 0.4553 | 1.0000 |
+| Vehicle | 10 | HSIC | -0.047 | [-1.253, 1.159] | 0.9382 | 1.0000 |
+| Vehicle | 10 | Block | -0.025 | [-2.125, 2.076] | 0.9813 | 1.0000 |
+| Image Segmentation | 10 | HSIC | -0.346 | [-1.091, 0.399] | 0.3547 | 1.0000 |
+| Image Segmentation | 10 | Block | -0.554 | [-1.141, 0.033] | 0.0637 | 1.0000 |
+| Multiple Features | 10 | Block | 0.660 | [-0.208, 1.528] | 0.1329 | 1.0000 |
+| ORL | 10 | HSIC | 0.250 | [-5.576, 6.076] | 0.9316 | 1.0000 |
+| ORL | 10 | Block | 1.600 | [-4.868, 8.068] | 0.6214 | 1.0000 |
+| Breast Cancer | 5 | HSIC | -0.074 | [-2.620, 2.472] | 0.9537 | 1.0000 |
+| Breast Cancer | 5 | Block | 0.769 | [-1.544, 3.082] | 0.5073 | 1.0000 |
+| Wine | 5 | HSIC | -0.333 | [-1.303, 0.636] | 0.4930 | 1.0000 |
+| Wine | 5 | Block | -0.333 | [-1.303, 0.636] | 0.4930 | 1.0000 |
+| Digits | 5 | HSIC | 0.244 | [-2.223, 2.710] | 0.8435 | 1.0000 |
+| Digits | 5 | Block | 3.851 | [0.932, 6.770] | 0.0108 | 0.3881 |
+| Ionosphere | 5 | HSIC | -0.057 | [-0.720, 0.606] | 0.8632 | 1.0000 |
+| Ionosphere | 5 | Block | 0.057 | [-0.728, 0.842] | 0.8842 | 1.0000 |
+| Sonar | 5 | HSIC | -0.767 | [-4.431, 2.898] | 0.6760 | 1.0000 |
+| Sonar | 5 | Block | 1.176 | [-3.591, 5.943] | 0.6222 | 1.0000 |
+| Libras Movement | 5 | HSIC | 1.167 | [-5.317, 7.650] | 0.7192 | 1.0000 |
+| Libras Movement | 5 | Block | 13.889 | [4.251, 23.526] | 0.0056 | 0.2084 |
+| Semeion | 5 | Block | -5.586 | [-8.623, -2.550] | 0.0006 | 0.0215 |
+| Vehicle | 5 | HSIC | 0.286 | [-1.986, 2.558] | 0.8013 | 1.0000 |
+| Vehicle | 5 | Block | -0.309 | [-2.486, 1.869] | 0.7767 | 1.0000 |
+| Image Segmentation | 5 | HSIC | -0.052 | [-0.757, 0.653] | 0.8829 | 1.0000 |
+| Image Segmentation | 5 | Block | -1.299 | [-1.899, -0.698] | 0.0001 | 0.0028 |
+| Multiple Features | 5 | Block | 1.390 | [-1.023, 3.803] | 0.2525 | 1.0000 |
+| ORL | 5 | HSIC | -1.150 | [-7.696, 5.396] | 0.7256 | 1.0000 |
+| ORL | 5 | Block | -0.800 | [-9.013, 7.413] | 0.8456 | 1.0000 |
+
+### Label-kernel checks
+
+Mean balanced accuracies on five matched folds at top-10. The one-hot factor and dense Delta kernel represent the same label kernel. The class-weighted Delta kernel changes the objective and is evaluated separately.
+
+| Dataset | One-hot factor | Dense Delta kernel | Class-weighted Delta kernel |
+| --- | --- | --- | --- |
+| Breast Cancer | 0.9716 | 0.9716 | 0.9716 |
+| Digits | 0.9385 | 0.9385 | 0.9385 |
+| Libras Movement | 0.7756 | 0.7756 | 0.7689 |
+| ORL | 0.6900 | 0.6900 | 0.6900 |
+
+### Main-solver convergence
+
+Each successful full-ranking fit is counted once when it serves both feature budgets. Iteration counts and residuals cover the 1000 distinct successful main timing fits. Allocation failures occur before solving and are not included. At limit / fits records how many fits reached the iteration limit.
+
+| Dataset | Method | Iterations min–max | Median iterations | Maximum KKT residual | At limit / fits |
+| --- | --- | --- | --- | --- | --- |
+| Breast Cancer | HSIC | 530–1440 | 940 | 9.979e-07 | 0/50 |
+| Breast Cancer | RFF-HSIC | 330–1330 | 805 | 9.993e-07 | 0/50 |
+| Wine | HSIC | 90–160 | 130 | 9.824e-07 | 0/50 |
+| Wine | RFF-HSIC | 70–170 | 110 | 9.957e-07 | 0/50 |
+| Digits | HSIC | 150–220 | 150 | 9.911e-07 | 0/50 |
+| Digits | RFF-HSIC | 100–260 | 170 | 9.998e-07 | 0/50 |
+| Ionosphere | HSIC | 140–200 | 180 | 9.716e-07 | 0/50 |
+| Ionosphere | RFF-HSIC | 130–180 | 160 | 9.720e-07 | 0/50 |
+| Sonar | HSIC | 140–240 | 190 | 9.915e-07 | 0/50 |
+| Sonar | RFF-HSIC | 80–250 | 175 | 9.879e-07 | 0/50 |
+| Libras Movement | HSIC | 960–2450 | 1730 | 9.946e-07 | 0/50 |
+| Libras Movement | RFF-HSIC | 850–2230 | 1490 | 9.966e-07 | 0/50 |
+| Semeion | RFF-HSIC | 230–270 | 250 | 9.959e-07 | 0/50 |
+| Vehicle | HSIC | 160–450 | 305 | 9.877e-07 | 0/50 |
+| Vehicle | RFF-HSIC | 150–420 | 240 | 9.974e-07 | 0/50 |
+| Image Segmentation | HSIC | 280–380 | 330 | 9.928e-07 | 0/50 |
+| Image Segmentation | RFF-HSIC | 190–940 | 390 | 9.961e-07 | 0/50 |
+| Multiple Features | RFF-HSIC | 1460–2800 | 1910 | 9.924e-07 | 0/50 |
+| ORL | HSIC | 2660–3900 | 3245 | 9.993e-07 | 0/50 |
+| ORL | RFF-HSIC | 1900–4090 | 3040 | 9.970e-07 | 0/50 |
+
+### Block solver controls
+
+NN-LARS and FISTA use identical Block designs and penalties matched at the NN-LARS training-path endpoint. Dense-system rows use 50 frozen folds, matching manuscript Table 10; matrix-free rows use five matched folds. Times are conditional solver costs, not complete selection-pipeline times. Dense FISTA includes fresh redundancy-matrix construction and NN-LARS includes native neighbor calculations. Common Block construction, penalty discovery, validation, and classifier fitting are excluded. Identical sets / folds counts agreement of the selected feature sets.
+
+| Dataset | Budget k | FISTA implementation | NN-LARS / s | FISTA / s | Identical sets / folds |
+| --- | --- | --- | --- | --- | --- |
+| Digits | 5 | Dense system | 0.0418 | 0.0114 | 50 / 50 |
+| Digits | 5 | Matrix-free | 0.0365 | 0.9537 | 5 / 5 |
+| Digits | 10 | Dense system | 0.0963 | 0.0109 | 50 / 50 |
+| Digits | 10 | Matrix-free | 0.0844 | 1.0474 | 5 / 5 |
+| Libras Movement | 5 | Dense system | 0.0104 | 0.0084 | 50 / 50 |
+| Libras Movement | 5 | Matrix-free | 0.0077 | 0.3941 | 5 / 5 |
+| Libras Movement | 10 | Dense system | 0.0259 | 0.0108 | 48 / 50 |
+| Libras Movement | 10 | Matrix-free | 0.0203 | 0.6434 | 5 / 5 |
+| ORL | 5 | Dense system | 0.1221 | 0.4672 | 50 / 50 |
+| ORL | 5 | Matrix-free | 0.1136 | 22.9855 | 5 / 5 |
+| ORL | 10 | Dense system | 0.2288 | 0.5068 | 50 / 50 |
+| ORL | 10 | Matrix-free | 0.2317 | 36.3082 | 5 / 5 |
+
+### Storage-layout controls
+
+Whole-process peak working set on five matched full Digits training folds, under a 4096 MiB committed-memory cap. Exact-HSIC is the original explicit layout; Exact-A-F uses Fortran-order explicit construction; Exact-streamed regenerates exact kernels in feature blocks of 20; RFF-HSIC is the factor-space method. Peak working set and committed-memory limit are separate measurements.
+
+| Construction | Folds | Mean peak working set / MiB |
+| --- | --- | --- |
+| Exact-HSIC | 5 | 1534.0906 |
+| Exact-A-F | 5 | 1513.9273 |
+| Exact-streamed | 5 | 1035.5664 |
+| RFF-HSIC | 5 | 241.2266 |
